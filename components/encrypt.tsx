@@ -77,7 +77,7 @@ export default function Encrypt() {
           <h2>Keys</h2>
           <p>
             Share each of these keys with different people. Anyone can decrypt this content with {quorum}/{parts} of these keys.
-            Make sure you keep the index number with the key, the order of the keys is important. Only ${quorum} keys are needed
+            Make sure you keep the index number with the key, the order of the keys is important. Only {quorum} keys are needed
             but they must be in the right index to decrypt.
           </p>
           <Textarea disabled value={toFile(id, parts, quorum, encrypted)} />
