@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { randomBytes } from "crypto"
 import { split } from "shamir"
+import uuid from 'uuid/v4'
 import { Input, Textarea, Button, Table, useOperationalContext, Form } from "@operational/components"
 import { handle } from "../util/handle"
 import { toFile } from "../util/keyFile"
@@ -10,6 +11,7 @@ export default function Encrypt() {
   const [parts, setParts] = useState(3)
   const [quorum, setQuorum] = useState(2)
   const [value, setValue] = useState('')
+  const [id, setId] = useState(null)
   const [encrypted, setEncrypted] = useState(null)
   const { pushMessage } = useOperationalContext()
 
@@ -19,6 +21,7 @@ export default function Encrypt() {
       const encryptedParts = split(randomBytes, parts, quorum, secretBytes)
       const encodedParts = Object.values(encryptedParts).map((p: Uint8Array) => Buffer.from(p).toString('base64'))
       setEncrypted(encodedParts)
+      setId(uuid())
     } catch (err) {
       pushMessage({ type: 'error', body: err.message })
     }
@@ -26,7 +29,7 @@ export default function Encrypt() {
 
   function download() {
     if (!encrypted) return;
-    const content = encrypted.join('\n\n')
+    const content = toFile(id, parts, quorum, encrypted)
     const blob = new Blob([ content ], { type: "octent/stream" })
     const url = URL.createObjectURL(blob)
 
@@ -41,7 +44,7 @@ export default function Encrypt() {
   }
 
   function copy() {
-    const content = toFile(parts, quorum, encrypted)
+    const content = toFile(id, parts, quorum, encrypted)
     navigator.clipboard.writeText(content)
     pushMessage({ type: 'info', body: "Keys copied to clipboard." })
   }
@@ -77,7 +80,7 @@ export default function Encrypt() {
             Make sure you keep the index number with the key, the order of the keys is important. Only ${quorum} keys are needed
             but they must be in the right index to decrypt.
           </p>
-          <Textarea disabled value={toFile(parts, quorum, encrypted)} />
+          <Textarea disabled value={toFile(id, parts, quorum, encrypted)} />
           <br/>
           <Button onClick={copy}>Copy</Button>
           <Button onClick={download}>Download</Button>

@@ -45,16 +45,25 @@ export default function Decrypt() {
   }
 
   function paste(event: any, offset: number) {
-    const pasted = event.clipboardData.getData('Text') || ''
-    const extractedKeys = fromFile(pasted)
-    if (extractedKeys) {
-      setParts([...extractedKeys])
-    } else {
-      const pastedParts = pasted
-        .split('\n')
-        .map(p => (p || '').trim())
-      parts.splice(offset, pastedParts.length, ...pastedParts)
-      setParts([...parts])
+    try {
+      const pasted = event.clipboardData.getData('Text') || ''
+      const { parts: parsedParts, keys: parsedKeys } = fromFile(pasted.trim())
+      if (parsedParts && parsedKeys) {
+        for (let i = 0; i < parsedParts; i++) {
+          const p = parsedKeys[i]
+          if (p) parts[i] = p
+          if (!parts[i]) parts[i] = ''
+        }
+        setParts([...parts])
+      } else {
+        const pastedParts = pasted
+          .split('\n')
+          .map(p => (p || '').trim())
+        parts.splice(offset, pastedParts.length, ...pastedParts)
+        setParts([...parts])
+      }
+    } catch (err) {
+      pushMessage({ type: 'error', body: err.message })
     }
   }
 
@@ -84,13 +93,15 @@ export default function Decrypt() {
                 parts[i] = val.trim()
                 setParts([...parts])
               }}
-              statusIcon={<DeleteIcon
-                size={24}
-                onClick={() => {
-                  parts.splice(i, 1)
-                  setParts([...parts])
-                }}
-              />}
+              statusIcon={parts.length > 1 ? (
+                <DeleteIcon
+                  size={24}
+                  onClick={() => {
+                    parts.splice(i, 1)
+                    setParts([...parts])
+                  }}
+                />
+              ) : undefined}
             />
           </>
         ))}
